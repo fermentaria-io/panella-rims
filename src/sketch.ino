@@ -1,10 +1,44 @@
 #include <LiquidCrystal.h>
+#include <OneWire.h>
+
 LiquidCrystal lcd(2, 3, 7, 6, 5, 4);
+OneWire ds(8);
 
 
 // Max controllers
 float current_temperature = 50.0;
 float target_temperature = 70.0;
+
+
+// From http://bildr.org/2011/07/ds18b20-arduino/
+float getTemp(OneWire probe){
+  byte data[12];
+  byte addr[8];
+
+  if ( !probe.search(addr) ||
+       OneWire::crc8( addr, 7) != addr[7] ||
+       addr[0] != 0x10 && addr[0] != 0x28)
+    return -1;
+
+  probe.reset();
+  probe.select(addr);
+  probe.write(0x44,1);
+
+  byte present = probe.reset();
+  probe.select(addr);
+  probe.write(0xBE);
+
+  for (int i = 0; i < 9; i++) {
+    data[i] = probe.read();
+  }
+  probe.reset_search();
+  byte MSB = data[1];
+  byte LSB = data[0];
+
+  float tempRead = ((MSB << 8) | LSB);
+  float TemperatureSum = tempRead / 16;
+  return TemperatureSum;
+}
 
 void setup() {
   lcd.begin(16, 2);
@@ -15,6 +49,8 @@ void setup() {
 }
 
 void loop() {
+
+  float current_temperature = getTemp(ds);
   lcd.setCursor(2, 0);
   lcd.print(current_temperature);
   lcd.setCursor(11, 0);

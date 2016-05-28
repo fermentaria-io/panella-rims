@@ -1,1 +1,3 @@
 .build_ano*
+lib/*
+one_wire.zip

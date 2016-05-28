@@ -3,11 +3,11 @@
 
 LiquidCrystal lcd(2, 3, 7, 6, 5, 4);
 OneWire ds(8);
+const int pin_relay = 9;
 
 
 // Max controllers
-float current_temperature = 50.0;
-float target_temperature = 70.0;
+float target_temperature = 22.0;
 
 
 // From http://bildr.org/2011/07/ds18b20-arduino/
@@ -41,16 +41,36 @@ float getTemp(OneWire probe){
 }
 
 void setup() {
+  pinMode(pin_relay, OUTPUT);
   lcd.begin(16, 2);
   lcd.setCursor(0, 0);
   lcd.print("T=XX.XX  A=XX.XX");
-  lcd.setCursor(0, 1);
-  lcd.print("Aquecedor ligado");
+}
+
+bool raise_temperature_p(float current, float target){
+  return current < target;
+}
+
+void adjust_relay(float current_temperature, float target_temperature){
+  bool raise = raise_temperature_p(current_temperature, target_temperature);
+  if (raise){
+    lcd.setCursor(0, 1);
+    digitalWrite(pin_relay, HIGH);
+    lcd.print("Relay ligado");
+  }
+  if (!raise){
+    lcd.setCursor(0, 1);
+    digitalWrite(pin_relay, LOW);
+    lcd.print("Relay desligado");
+  }
 }
 
 void loop() {
 
   float current_temperature = getTemp(ds);
+
+  adjust_relay(current_temperature, target_temperature);
+
   lcd.setCursor(2, 0);
   lcd.print(current_temperature);
   lcd.setCursor(11, 0);
